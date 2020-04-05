@@ -1,4 +1,4 @@
-Posição,Município,Population,Área Urb. (Km2),Área Tot. (Km2),Densidade Urb. (Pessoas/Km2),Densidade total (Pessoas/Km2),Area Urb. (m2),Area Tot.     (m2),Densidade Urb. (Pessoa/m2),Densidade Tot. (m2),Indice Contagio
+Position,City,Population,Urban Area (Km2),,Total Area (Km2),Urban Density (People/Km2),Total Density (People/Km2),Urban Area (m2),Total Area (m2),Urban Density (People/m2),Total Density (People/m2)
 7,São João de Meriti,472406,35.34,35.83,13367.45897,13184.649734999999,35340000,35830000,0.013366999999999999,0.013184999999999999,7.480853333788089e-05
 19,Nilópolis,162485,11.54,19.39,14080.155979,8379.834966,11540000,19390000,0.01408,0.00838,7.102194048783698e-05
 5,Belford Roxo,510906,64.77,77.82,7888.003705,6565.227448,64770000,77820000,0.007888,0.0065650000000000005,0.00012677478832396165
