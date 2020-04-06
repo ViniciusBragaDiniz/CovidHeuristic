@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[219]:
+# In[73]:
 
 
 import pandas as pd
@@ -11,83 +11,104 @@ import matplotlib.pyplot as plt
 import BRKGA as brkga
 
 
-# In[220]:
+# In[74]:
 
 
-dem = pd.read_csv("Instances/AnalisePopulacionalTratada.csv",index_col=0)
+dem = pd.read_csv("Instances/DemographicData.csv",index_col=0)
 dem = dem.reindex(index = sorted(dem.index))
 
 
-# In[221]:
+# In[75]:
 
 
-prox = pd.read_csv("Instances/Proximidade.csv",dtype=int, index_col=0)
+prox = pd.read_csv("Instances/Neighboorhood.csv",dtype=int, index_col=0)
 prox.columns = prox.columns.to_numpy(int)
 prox = prox.reindex(index = sorted(prox.index), columns=sorted(prox.columns))
 
 
-# In[248]:
+# In[76]:
 
 
-_relation = pd.read_csv("Instances/hospitalCidades.csv",index_col=0,header=None,squeeze=True)
+params = pd.read_csv("Input/Parameters.csv", index_col=0,dtype={"N":int,"M":int,"P":int,"Elite":int,"Mutant":int,
+                                                                "K":int, "S":int,"Type":bool})
 
 
-# In[249]:
+# In[125]:
 
 
-params=pd.DataFrame([len(_relation),8,20,4,2,10,False],["N","M","P","Elite","Mutant","K","Type"],["Value"])
+_relation = pd.read_csv("Input/Facilities.csv",index_col=0)
+
+facilities_cost = []
+facilities_cover = []
+
+for i in _relation["Cost"].values:
+    facilities_cost.append(i)
+
+for i in _relation["Cover"].values:
+    facilities_cover.append(i)
+
+facilities_cost = _relation["Cost"].values
+facilities_cover = _relation["Cover"].values
 
 
-# In[250]:
+# In[115]:
 
 
-facilities_cost = np.random.random(params.loc["N"]["Value"])*100000
-facilities_cover = np.random.random(params.loc["N"]["Value"])*1000
+for i in range(0,params["N"]["Value"]):
+    facilities_cover[i]= facilities_cover[i]/dem["Urban Density (People/Km2)"][i]*_relation["City"].value_counts()[_relation["City"][i]]
+    facilities_cost[i] = facilities_cost[i]*_relation["City"].value_counts()[_relation["City"][i]]/dem["Urban Density (People/Km2)"][i]
 
 
-# In[251]:
-
-
-for i in range(0,params.loc["N"]["Value"]):
-    facilities_cover[i]= facilities_cover[i]/dem["Urban Density (People/Km2)"][i]*_relation.value_counts()[_relation[i]]
-
-
-# In[252]:
+# In[116]:
 
 
 Heuristic = brkga.BRKGA(facilities_cover,facilities_cost,
-                        params.loc["M"]["Value"],params.loc["P"]["Value"],
-                        params.loc["Elite"]["Value"],params.loc["Mutant"]["Value"],
-                        params.loc["K"]["Value"],params.loc["Type"]["Value"])
+                        params["M"]["Value"],params["P"]["Value"],
+                        params["Elite"]["Value"],params["Mutant"]["Value"],
+                        params["K"]["Value"],params["Type"]["Value"])
 
 
-# In[253]:
+# In[117]:
 
 
 solutions, facilities = Heuristic.Solve()
 
 
-# In[254]:
+# In[118]:
 
 
 best_solutions = Heuristic.getObjectiveEvolution()
 
 
-# In[255]:
+# In[119]:
 
 
 Fig = plt.figure(figsize=(5,5),)
-plt.plot(range(0,params.loc["K"]["Value"]),pd.Series(best_solutions)/1000,figure=Fig)
+plt.plot(range(0,params["K"]["Value"]),pd.Series(best_solutions),figure=Fig)
 plt.xlabel("Iterations")
 plt.ylabel("Obj. Value (1/1000)")
 plt.title("Evolution of The Objective Value")
-Fig.savefig("Exit/Evolution.png")
+Fig.savefig("Exit/Evolution"+str(params["S"]["Value"])+".png")
 
 
-# In[256]:
+# In[132]:
 
 
 exit_data = pd.DataFrame(facilities)
-exit_data["sol_value"] = solutions
-exit_data.to_csv("Exit/Solutions.csv")
+exit_data["obj_value"] = solutions
+exit_data["final_cost"] = 0
+exit_data["final_cover"] = 0
+
+for i in exit_data.index:
+    cover = 0
+    cost = 0
+    for j in exit_data.loc[i][:params["M"]["Value"]]:
+        cost += _relation["Cost"][j]
+        cover += _relation["Cover"][j]
+        
+    exit_data.loc[i]["final_cost"] = cost
+    exit_data.loc[i]["final_cover"] = cover
+    
+exit_data = exit_data.sort_values("obj_value",ascending=False)    
+exit_data.to_csv("Exit/Solution"+str(params["S"]["Value"])+".csv")
 
