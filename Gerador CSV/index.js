@@ -1,10 +1,12 @@
 const express = require('express')
 const app = express()
 const fs = require('fs')
+const cors = require('cors')
 const bodyParser = require('body-parser')
 const caminho = __dirname + '/AnalisePopulacionalTratada.csv'
 
 app.use(express.static('.'))
+app.use(cors())
 app.use(bodyParser.json())
 
 function pegarCidades(results, analisePopulacional) {
@@ -53,20 +55,10 @@ app.post('/construirCSV', (req, res) => {
     //Tratar os hospitais/estados que recebi
     const {lugares, filtro} = req.body
     cidades = pegarCidades(lugares, analisePopulacional)
-    /*const validarCidade = (cidade) => {
-        const objeto = analisePopulacional.find(cidade => cidade.nome == cidade)
-        return objeto != undefined
-    }
-    novasCidades = cidades.filter(cidade => cidade.trim() != "").filter(validarCidade)*/
     novasCidades = cidades.filter(cidade => cidade.trim() != "")
-    //console.log('Cidades', novasCidades)
-    
-
-    //console.log('Análise Populacional', analisePopulacional)
 
     let i = 0
     const novoCSV = novasCidades.map(string => {
-        //console.log('String', string)
         let objeto = analisePopulacional.find(cidade => cidade.nome == string.trim())
         if(objeto == undefined)
             console.log('Deu ruim', string)
@@ -79,7 +71,7 @@ app.post('/construirCSV', (req, res) => {
         stringFinal += `${linha.id};${linha.cidade};\n`
     })
 
-    fs.writeFile(__dirname + `/${filtro}Cidades.csv`, stringFinal, err => console.log(err))
+    fs.writeFile(__dirname + `/ocorrenciaCidades.csv`, stringFinal, err => res.status(500).send(err))
     res.status(200).send('Arquivo Salvo')
     //console.log(novoCSV)
     
