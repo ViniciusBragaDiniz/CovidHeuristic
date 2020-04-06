@@ -68,7 +68,7 @@ app.post('/construirCSV', (req, res) => {
     let stringFinal = ''
 
     novoCSV.forEach(linha => {
-        stringFinal += `${linha.id};${linha.cidade};\n`
+        stringFinal += `${linha.id},${linha.cidade},\n`
     })
 
     fs.writeFile(__dirname + `/ocorrenciaCidades.csv`, stringFinal, err => res.status(500).send(err))
