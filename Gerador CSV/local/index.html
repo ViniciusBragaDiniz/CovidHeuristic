@@ -3,31 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <title>Google Maps API</title>
     <style>
+        h1 {
+            font-size: 16pt;
+        }
         #map{
+            display: block;
             height: 400px;
             width: 100%;
         }
+        div#side-bar {
+            height: 400px;
+        }
+
+        input[type=number]{
+            width: 100px;
+        }
+
+        .table-fixed tbody {
+    height: 300px;
+    overflow-y: auto;
+    width: 100%;
+}
     </style>
 </head>
 <body>
 
-    Raio de busca (em metros): <input type="number" name="radius" id="radius">
-    Filtro: <select name="filtro" id="filtro">
-        <option value="stadium">Estádios</option>
-        <option value="hospital">Hospitais</option>
-    </select>
+    <div class="container">
+        Raio de busca (em metros): <input class="form-control" type="number" name="radius" id="radius">
+        Filtro: <select class="form-control mb-2" name="filtro" id="filtro">
+            <option value="stadium">Estádios</option>
+            <option value="hospital">Hospitais</option>
+        </select>
 
-    <button id="submit" onclick="ajax()">Gerar CSV</button>
+        <button id="submit" class="btn btn-success" onclick="ajax()">Gerar CSV</button>
+        <button id="submit" class="btn btn-warning" onclick="clearResults()">Limpar</button>
 
 
-    <h1>Mapa (clique com o botão esquerdo do mouse adicionar os estabelecimentos na lista)</h1>
-    <div id="map"></div>
+        <h1>Mapa (clique com o botão esquerdo do mouse adicionar os estabelecimentos na lista)</h1>
+        <div id="content" class="row">
+            <div class="col-6" id="map"></div>
+            <div class="col-6 overflow-auto" id="side-bar">
+                <table class="table" id="lista">
+                    
+                </table>
+                <button class="btn btn-primary mt-2" onclick="confirmarTodos()" type="button">Confirmar Todos</button>
+            </div>
+        </div>
 
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.js" integrity="sha256-BTlTdQO9/fascB1drekrDVkaKd9PkwBymMlHOiG+qLI=" crossorigin="anonymous"></script>
     <script src="js/axios.js"></script>
     <script>
 
+        /*$(document).click(function() {
+            $("#side-bar").toggle('slide')
+        })*/
         /*document.body.onload = async e => {
             const resultado = await axios("http://localhost:3300/refri")
                 .catch(err => console.log(err))
@@ -40,7 +74,7 @@
         let service = null
         let markers = []
         let filtro = null
-        const busca = []
+        let busca = []
         function initMap() {
 
             const center = {lat: -22.9035 , lng: -43.2096}
@@ -69,7 +103,7 @@
                 let param = filtro
                 //console.log(filtro, radius)
                 map.setCenter(event.latLng)
-                clearResults(markers)
+                //clearResults(markers)
                 request = {
                     fields: ['name', 'vicinity', 'plus_code'],
                     location: event.latLng,
@@ -99,6 +133,7 @@
                 })
                 console.log(busca)
                 
+                gerarLista()
                 /*const resposta = await axios.post('/construirCSV', {lugares: results, filtro})
                 console.log(resposta)
                 alert(resposta.data)*/
@@ -119,9 +154,82 @@
             return marker
         }
 
-        function clearResults(markers){
+        function clearResults(){
             markers.forEach(marker => marker.setMap(null))
             markers = []
+            busca = []
+            gerarLista()
+        }
+
+        function gerarLista() {
+            const tabela = document.getElementById('lista') 
+            tabela.innerHTML = `<tr>
+                            <td>Nome</td>
+                            <td>Custo</td>
+                            <td>Cobertura</td>
+                            <td>Confirmar</td>
+                            <td>Deletar</td>
+                        </tr>`
+            busca.forEach(lugar => {
+                const linha = document.createElement('tr')
+                linha.innerHTML = `<td>${lugar.name}</td>
+                <td> 
+                    <input type="number" size="3pt" id='txtCusto${lugar.id}' name="custo">
+                </td>
+                <td> 
+                    <input type="number" size="3pt" id='txtCobertura${lugar.id}' name="cobertura">
+                </td>
+                <td><button class="btn btn-primary" type="button" onclick="confirmar('${lugar.id}')">Confirmar</button></td>
+                <td><button class="btn btn-danger" onclick="remover('${lugar.id}')" type="button">Deletar</button></td>`
+                tabela.append(linha)
+            })
+            
+        }
+
+        function confirmar(id) {
+            const indice = busca.indexOf(busca.find(element => {
+                if(element)
+                    return element.id === id
+                else
+                    return false
+            }))
+
+            const custo = document.querySelector(`#txtCusto${busca[indice].id}`).value
+            const cobertura = document.querySelector(`#txtCobertura${busca[indice].id}`).value
+            busca[indice].custo = parseFloat(custo)
+            busca[indice].cobertura = parseInt(cobertura)
+            //console.log(busca[indice])
+        }
+
+        function confirmarTodos() {
+            busca.forEach(lugar => {
+                if(lugar) {
+                    const custo = document.querySelector(`#txtCusto${lugar.id}`).value
+                    const cobertura = document.querySelector(`#txtCobertura${lugar.id}`).value
+                    lugar.custo = parseFloat(custo)
+                    lugar.cobertura = parseInt(cobertura)
+                }
+            })
+            console.log(busca)
+        }
+
+        function remover(id) {
+            const indice = busca.indexOf(busca.find(element => {
+                if(element)
+                    return element.id === id
+                else
+                    return false
+                }))
+            console.log('Remoção', busca[indice])
+            markers.forEach(marker => {
+                if(marker.position === busca[indice].geometry.location){
+                    console.log('Achei')
+                    marker.setMap(null)
+                }
+            })
+            delete busca[indice]
+            console.log(busca)
+            gerarLista()
         }
 
         async function ajax() {
