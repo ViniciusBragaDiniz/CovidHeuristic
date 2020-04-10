@@ -22,11 +22,9 @@
             width: 100px;
         }
 
-        .table-fixed tbody {
-    height: 300px;
-    overflow-y: auto;
-    width: 100%;
-}
+        #confirmar {
+            float: right;
+        }
     </style>
 </head>
 <body>
@@ -49,9 +47,10 @@
                 <table class="table" id="lista">
                     
                 </table>
-                <button class="btn btn-primary mt-2" onclick="confirmarTodos()" type="button">Confirmar Todos</button>
             </div>
         </div>
+        <button id="confirmar" class="btn btn-primary mt-2" onclick="confirmarTodos()" type="button">Confirmar Todos</button>
+
 
     </div>
 
