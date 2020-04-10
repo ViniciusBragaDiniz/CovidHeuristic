@@ -9,41 +9,38 @@ app.use(express.static('.'))
 app.use(cors())
 app.use(bodyParser.json())
 
-function pegarCidades(results, analisePopulacional) {
+function pegarLocais(results, analisePopulacional) {
     const cidades = []
     results.forEach(place => {
-        let cidade = ''
-        analisePopulacional.forEach(obj => {
-            let lugar = place.vicinity || ''
-            let result = lugar.indexOf(obj.nome) > -1
-            if(result) {
-                //console.log(obj.nome+` é a cidade do lugar `+lugar)
-                cidade = obj.nome
-            }else if(place.plus_code) {
-                lugar = place.plus_code.compound_code
-                result = lugar.indexOf(obj.nome) > -1
+        if(place) {
+            let cidade = {}
+            analisePopulacional.forEach(obj => {
+                let lugar = place.vicinity || ''
+                let result = lugar.indexOf(obj.nome) > -1
                 if(result) {
-                    //console.log(obj.nome+` é a cidade do lugar `+lugar)
-                    cidade = obj.nome
+                    cidade.nome = obj.nome
+                }else if(place.plus_code) {
+                    lugar = place.plus_code.compound_code
+                    result = lugar.indexOf(obj.nome) > -1
+                    if(result) {
+                        cidade.nome = obj.nome
+                    }
                 }
-            }
-        })
-        cidades.push(cidade)
-        /*if(place.plus_code) {
-            let lugar = place.plus_code.compound_code.split('-')[0]
-            if(lugar.split(',')[1]) {
-                cidade = lugar.split(',')[1]
-            }
-        }else {
-            cidade = place.vicinity
-        }*/
+            })
+
+            cidade.cobertura = place.cobertura
+            cidade.custo = place.custo
+            
+            cidades.push(cidade)
+        }
     })
+    console.log(cidades)
     return cidades
 }
 
 
 
-app.post('/construirCSV', (req, res) => {
+app.post('/construirCSV', (req, res, next) => {
     //Tratamento do arquivo
     const arquivo = fs.readFileSync(caminho, 'utf-8')
     const linhas = arquivo.split('\n')
@@ -54,21 +51,24 @@ app.post('/construirCSV', (req, res) => {
 
     //Tratar os hospitais/estados que recebi
     const {lugares, filtro} = req.body
-    cidades = pegarCidades(lugares, analisePopulacional)
-    novasCidades = cidades.filter(cidade => cidade.trim() != "")
+    const locais = pegarLocais(lugares, analisePopulacional)
+    novosLocais = locais.filter(lugar => lugar.nome.trim() != "")
 
     let i = 0
-    const novoCSV = novasCidades.map(string => {
-        let objeto = analisePopulacional.find(cidade => cidade.nome == string.trim())
-        if(objeto == undefined)
+    console.log('Novas Cidades', novosLocais)
+    const novoCSV = novosLocais.map(local => {
+        let cidade = analisePopulacional.find(cidade => cidade.nome == local.nome.trim())
+        if(cidade == undefined)
             console.log('Deu ruim', string)
-        return {id: i++, cidade: objeto.id, nome: objeto.nome}
+        return {id: i++, cidade: cidade.id, nome: cidade.nome, cobertura: local.cobertura, custo: local.custo}
     })
+
+    console.log('Novo CSV', novoCSV)
 
     let stringFinal = ''
 
     novoCSV.forEach(linha => {
-        stringFinal += `${linha.id},${linha.cidade},\n`
+        stringFinal += `${linha.id},${linha.cidade},${linha.cobertura},${linha.custo}\n`
     })
 
     fs.writeFile(__dirname + `/ocorrenciaCidades.csv`, stringFinal, err => res.status(500).send(err))
