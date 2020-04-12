@@ -56,23 +56,31 @@ app.post('/construirCSV', (req, res, next) => {
 
     let i = 0
     console.log('Novas Cidades', novosLocais)
-    const novoCSV = novosLocais.map(local => {
+    const cover = {value: []}
+    const city = {value: []}
+    const cost = {value: []}
+    novosLocais.forEach(local => {
         let cidade = analisePopulacional.find(cidade => cidade.nome == local.nome.trim())
-        if(cidade == undefined)
+        if(cidade == undefined){
             console.log('Deu ruim', string)
-        return {id: i++, cidade: cidade.id, nome: cidade.nome, cobertura: local.cobertura, custo: local.custo}
+        } else {
+            cover.value.push(local.cobertura)
+            city.value.push(cidade.id)
+            cost.value.push(local.custo)
+        }
+        //return {id: i++, cidade: cidade.id, nome: cidade.nome, cobertura: local.cobertura, custo: local.custo}
     })
 
-    console.log('Novo CSV', novoCSV)
+    /*console.log('Novo CSV', novoCSV)
 
     let stringFinal = ''
 
     novoCSV.forEach(linha => {
         stringFinal += `${linha.id},${linha.cidade},${linha.cobertura},${linha.custo}\n`
-    })
+    })*/
 
-    fs.writeFile(__dirname + `/ocorrenciaCidades.csv`, stringFinal, err => res.status(500).send(err))
-    res.status(200).send('Arquivo Salvo')
+    //fs.writeFile(__dirname + `/ocorrenciaCidades.csv`, stringFinal, err => res.status(500).send(err))
+    res.status(200).send(JSON.stringify({city, cover, cost}))
     //console.log(novoCSV)
     
     //res.send((cidades))*/
